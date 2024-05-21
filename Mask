@@ -1,0 +1,38 @@
+import os
+
+import torch
+import matplotlib.pyplot as plt
+import numpy as np
+import torch.nn.functional as F
+import visual_ONN
+import math
+# Load the trained model
+model_path = "model_fold_400_5.pth"
+model = visual_ONN.Net()  # Create an instance of your Net class
+model.load_state_dict(torch.load(model_path))
+model.eval()  # Set the model to evaluation mode (no gradient calculations)
+
+complex_weights = []
+
+# Loop through the diffractive layers
+for i in range(len(model.diffractiveLayer)):
+     phase_layer = model.diffractiveLayer[i]
+     weights_complex = phase_layer.weight.detach().cpu().numpy()
+     complex_weights.append(weights_complex)
+
+# Plot the phase and magnitude separately
+plt.figure(figsize=(12, 6))
+
+for i, weights_complex in enumerate(complex_weights):
+     plt.subplot(1, len(complex_weights), i + 1)
+
+     # Visualize the phase
+     phase_map = np.angle(weights_complex)
+     phase=phase_map.squeeze()
+     phase_mask=np.where(phase>=0,phase,phase+np.pi)
+     plt.imshow(phase_mask, interpolation='nearest')
+     plt.title(f"Phase Map Layer {i + 1}")
+     plt.colorbar()
+     plt.axis('off')
+plt.tight_layout()
+plt.show()
