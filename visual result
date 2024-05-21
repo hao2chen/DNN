@@ -1,0 +1,47 @@
+import torch
+import matplotlib.pyplot as plt
+import numpy as np
+from PIL import Image
+import visual_ONN
+import torchvision
+import torch.nn.functional as F
+from torchvision import transforms
+from torch.utils.data import DataLoader
+# Load the trained model
+model_path = "model_fold_400_5.pth"
+model = visual_ONN.Net()  # Create an instance of your Net class
+model.load_state_dict(torch.load(model_path))
+model.eval()  # Set the model to evaluation mode (no gradient calculations)
+
+# Load a handwritten image (replace with your image path)
+transform = transforms.Compose([transforms.ToTensor(), transforms.Resize((280, 280))])
+train_dataset = torchvision.datasets.MNIST("./data", train=True, transform=transform, download=True)
+val_dataset = torchvision.datasets.MNIST("./data", train=False, transform=transform, download=True)
+train_dataloader = DataLoader(dataset=train_dataset, batch_size=200, num_workers=8, shuffle=True,
+                              pin_memory=True)
+val_dataloader = DataLoader(dataset=val_dataset, batch_size=200, num_workers=8, shuffle=False,
+                            pin_memory=True)
+
+# Preprocess the input image
+rand_ind = np.random.choice(range(len(val_dataset)), size=10, replace=False)
+
+
+
+
+# Pass the input image through the model
+with torch.no_grad():
+    for ind in rand_ind:
+        PADDING=60
+        input_image=F.pad(val_dataset[ind][0],pad=(PADDING, PADDING, PADDING, PADDING))
+        detection_output,_ = model(input_image)
+        detection_output = detection_output.squeeze().cpu().numpy()
+
+        # Visualize the detection output
+        plt.figure(figsize=(6, 6))
+        plt.imshow(input_image.squeeze(), cmap='viridis', interpolation='nearest')
+        plt.show()
+        plt.imshow(detection_output, cmap='viridis', interpolation='nearest')
+        plt.title("Detection Output")
+        plt.colorbar()
+        plt.axis('off')
+        plt.show()
